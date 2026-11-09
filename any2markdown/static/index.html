@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Any2Markdown</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M8 22V10h3l3 4 3-4h3v12h-3v-7l-3 4-3-4v7z' fill='white'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --bg-grad: radial-gradient(1200px 600px at 10% -10%, rgba(99,102,241,0.10), transparent 60%),
+               radial-gradient(900px 500px at 110% 0%, rgba(14,165,233,0.08), transparent 60%);
+    --panel: #ffffff;
+    --panel-2: #f3f4f8;
+    --panel-3: #eceef4;
+    --border: #e3e5ec;
+    --border-strong: #cfd3de;
+    --text: #1b1e2b;
+    --text-2: #3d4255;
+    --muted: #737a8f;
+    --accent: #4f46e5;
+    --accent-2: #6366f1;
+    --accent-soft: rgba(79, 70, 229, 0.08);
+    --accent-ring: rgba(79, 70, 229, 0.22);
+    --on-accent: #ffffff;
+    --good: #059669;
+    --good-soft: rgba(5, 150, 105, 0.10);
+    --bad: #dc2626;
+    --bad-soft: rgba(220, 38, 38, 0.08);
+    --warn: #d97706;
+    --warn-soft: rgba(217, 119, 6, 0.10);
+    --code-bg: #f3f4f8;
+    --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 4px 16px rgba(16,24,40,0.06);
+    --radius: 14px;
+    --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1017;
+      --bg-grad: radial-gradient(1200px 600px at 10% -10%, rgba(99,102,241,0.16), transparent 60%),
+                 radial-gradient(900px 500px at 110% 0%, rgba(14,165,233,0.10), transparent 60%);
+      --panel: #151924;
+      --panel-2: #1b2030;
+      --panel-3: #222839;
+      --border: #262c3d;
+      --border-strong: #353c52;
+      --text: #e7e9f0;
+      --text-2: #c3c7d4;
+      --muted: #8a90a5;
+      --accent: #818cf8;
+      --accent-2: #a5b4fc;
+      --accent-soft: rgba(129, 140, 248, 0.12);
+      --accent-ring: rgba(129, 140, 248, 0.30);
+      --on-accent: #0d1017;
+      --good: #34d399;
+      --good-soft: rgba(52, 211, 153, 0.12);
+      --bad: #f87171;
+      --bad-soft: rgba(248, 113, 113, 0.10);
+      --warn: #fbbf24;
+      --warn-soft: rgba(251, 191, 36, 0.12);
+      --code-bg: #1b2030;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1017;
+    --bg-grad: radial-gradient(1200px 600px at 10% -10%, rgba(99,102,241,0.16), transparent 60%),
+               radial-gradient(900px 500px at 110% 0%, rgba(14,165,233,0.10), transparent 60%);
+    --panel: #151924;
+    --panel-2: #1b2030;
+    --panel-3: #222839;
+    --border: #262c3d;
+    --border-strong: #353c52;
+    --text: #e7e9f0;
+    --text-2: #c3c7d4;
+    --muted: #8a90a5;
+    --accent: #818cf8;
+    --accent-2: #a5b4fc;
+    --accent-soft: rgba(129, 140, 248, 0.12);
+    --accent-ring: rgba(129, 140, 248, 0.30);
+    --on-accent: #0d1017;
+    --good: #34d399;
+    --good-soft: rgba(52, 211, 153, 0.12);
+    --bad: #f87171;
+    --bad-soft: rgba(248, 113, 113, 0.10);
+    --warn: #fbbf24;
+    --warn-soft: rgba(251, 191, 36, 0.12);
+    --code-bg: #1b2030;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.25);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+    font-size: 14px;
+    background: var(--bg-grad), var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  svg.i { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* ---- Header ---------------------------------------------------------- */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: saturate(160%) blur(12px);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 1440px; margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand h1 { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
+  .brand .sub { font-size: 12px; color: var(--muted); margin-top: -2px; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; align-items: center; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px; font-size: 12px;
+    background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+    max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pill b { color: var(--text-2); font-weight: 550; overflow: hidden; text-overflow: ellipsis; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+  .dot.ok { background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+  .dot.err { background: var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); }
+  .dot.warn { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
+  .dot.checking { background: var(--muted); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center;
+    background: var(--panel); border: 1px solid var(--border); color: var(--muted); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+  /* ---- Layout ---------------------------------------------------------- */
+  main {
+    max-width: 1440px; margin: 0 auto; padding: 24px;
+    display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 20px; align-items: start;
+  }
+  @media (max-width: 960px) { main { grid-template-columns: 1fr; padding: 16px; } .header-inner { padding: 12px 16px; } }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .side { position: sticky; top: 76px; }
+  @media (max-width: 960px) { .side { position: static; } }
+  .panel-body { padding: 18px; }
+  .panel-title { font-size: 13px; font-weight: 600; color: var(--text-2); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+
+  /* Segmented tabs */
+  .tabs {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;
+    padding: 4px; margin: 18px 18px 0; border-radius: 10px; background: var(--panel-2);
+  }
+  .tab {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 6px; border-radius: 7px; cursor: pointer;
+    background: transparent; border: none; color: var(--muted);
+    font-size: 13px; font-weight: 550; font-family: inherit; transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); background: var(--panel); box-shadow: 0 1px 3px rgba(16,24,40,0.10); }
+  .tab.active svg { color: var(--accent); }
+  .tab-content { display: none; animation: fade 0.18s ease; }
+  .tab-content.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+
+  /* Form controls */
+  label.field { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin: 0 0 6px; }
+  .field-gap { margin-top: 14px; }
+  label.field.field-gap { margin-top: 14px; }
+  input[type="text"], input[type="url"], input[type="password"], textarea, select {
+    width: 100%; background: var(--panel); border: 1px solid var(--border-strong);
+    color: var(--text); padding: 9px 12px; border-radius: 9px;
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+  textarea { resize: vertical; min-height: 200px; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+  .input-icon { position: relative; }
+  .input-icon svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .input-icon input { padding-left: 34px; }
+
+  .switch-row {
+    display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 10px 12px;
+    border-radius: 9px; background: var(--panel-2); cursor: pointer; user-select: none;
+  }
+  .switch-row .txt { font-size: 13px; color: var(--text-2); }
+  .switch-row .txt small { display: block; font-size: 12px; color: var(--muted); }
+  .switch { position: relative; width: 34px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .switch .track { position: absolute; inset: 0; border-radius: 999px; background: var(--border-strong); transition: background 0.15s; }
+  .switch .track::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 0.15s;
+  }
+  .switch input:checked + .track { background: var(--accent); }
+  .switch input:checked + .track::after { transform: translateX(14px); }
+  .switch input:focus-visible + .track { box-shadow: 0 0 0 3px var(--accent-ring); }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 1.5px dashed var(--border-strong); border-radius: 12px; padding: 30px 16px;
+    text-align: center; cursor: pointer; transition: all 0.15s; background: var(--panel-2);
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+  .drop-zone.dragover { transform: scale(1.01); }
+  .drop-zone .dz-icon {
+    width: 46px; height: 46px; margin: 0 auto 10px; border-radius: 12px;
+    display: grid; place-items: center; background: var(--panel); color: var(--accent);
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+  }
+  .drop-zone .dz-icon svg { width: 22px; height: 22px; }
+  .drop-zone .dz-title { font-weight: 600; color: var(--text); }
+  .drop-zone .dz-title em { font-style: normal; color: var(--accent); }
+  .drop-zone .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .formats { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 12px; }
+  .formats span {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.02em; padding: 2px 7px; border-radius: 5px;
+    background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+  }
+
+  .file-card {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2);
+  }
+  .file-badge {
+    width: 40px; height: 46px; border-radius: 7px; display: grid; place-items: center; flex-shrink: 0;
+    font-size: 10px; font-weight: 750; letter-spacing: 0.03em; color: #fff; background: var(--muted);
+  }
+  .file-info { min-width: 0; flex: 1; }
+  .file-info .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-info .size { font-size: 12px; color: var(--muted); }
+
+  /* Buttons */
+  button.primary {
+    width: 100%; margin-top: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent)); color: var(--on-accent); border: none;
+    padding: 11px 18px; border-radius: 10px; font-size: 14px; font-family: inherit;
+    font-weight: 650; cursor: pointer; transition: filter 0.15s, transform 0.05s, box-shadow 0.15s;
+    box-shadow: 0 4px 14px var(--accent-ring);
+  }
+  button.primary:hover:not(:disabled) { filter: brightness(1.06); }
+  button.primary:active:not(:disabled) { transform: translateY(1px); }
+  button.primary:disabled { opacity: 0.6; cursor: progress; box-shadow: none; }
+  .kbd-hint { text-align: center; font-size: 11px; color: var(--muted); margin-top: 8px; }
+  kbd {
+    font-family: var(--mono); font-size: 10.5px; padding: 1px 5px; border-radius: 4px;
+    border: 1px solid var(--border-strong); border-bottom-width: 2px; background: var(--panel); color: var(--text-2);
+  }
+  button.ghost {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; color: var(--text-2); border: 1px solid transparent;
+    padding: 6px 10px; border-radius: 8px; font-size: 12.5px; font-family: inherit; font-weight: 550; cursor: pointer;
+    transition: all 0.15s;
+  }
+  button.ghost:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
+  button.ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.ghost.danger:hover { color: var(--bad); background: var(--bad-soft); }
+  button.ghost.done { color: var(--good); }
+  .seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--panel-2); }
+  .seg button { border: none; padding: 5px 10px; border-radius: 6px; }
+  .seg button.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 3px rgba(16,24,40,0.10); }
+  .seg button.active svg { color: var(--accent); }
+
+  /* ---- Result panel ---------------------------------------------------- */
+  .result { display: flex; flex-direction: column; min-height: calc(100vh - 124px); }
+  .result-toolbar {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .result-toolbar .actions { display: flex; gap: 2px; flex-wrap: wrap; }
+  .result-head { padding: 14px 18px 0; }
+  .result-head:empty { display: none; }
+
+  .stats { display: flex; gap: 6px; flex-wrap: wrap; }
+  .stats:empty { display: none; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+    padding: 3px 9px; border-radius: 7px; font-size: 12px;
+    background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+  }
+  .chip b { color: var(--text-2); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip.ok { background: var(--good-soft); border-color: transparent; color: var(--good); }
+  .chip.ok b { color: var(--good); }
+  .chip.err { background: var(--bad-soft); border-color: transparent; color: var(--bad); }
+  .chip.err b { color: var(--bad); }
+  .chip.accent { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+  .chip.accent b { color: var(--accent); }
+  .chip svg { width: 13px; height: 13px; }
+  .chip a { color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip a:hover { text-decoration: underline; }
+
+  .notice {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 10px 12px; border-radius: 10px; font-size: 13px; margin-top: 10px;
+  }
+  .notice svg { margin-top: 2px; }
+  .notice.error { background: var(--bad-soft); color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent); }
+  .notice.info { background: var(--panel-2); color: var(--text-2); border: 1px solid var(--border); }
+  .notice.warn { background: var(--warn-soft); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); }
+  .notice .msg { word-break: break-word; white-space: pre-wrap; }
+  .notice b.ok { color: var(--good); }
+  .notice b.bad { color: var(--bad); }
+
+  /* Streaming progress */
+  .run { margin-bottom: 10px; }
+  .phases { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+  .phase {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 7px;
+    font-size: 12px; color: var(--muted); background: var(--panel-2); border: 1px solid var(--border);
+  }
+  .phase b { font-family: var(--mono); font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .phase svg { width: 12px; height: 12px; color: var(--good); }
+  .phase.active { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+  .phase.active b { color: var(--accent); }
+  .phase.active .spinner { width: 11px; height: 11px; }
+  .phase.slow { border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+  .phase.slow b { color: var(--warn); }
+  .phase-sep { color: var(--border-strong); font-size: 12px; }
+  .run-detail { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .run-detail:empty { display: none; }
+  .bar { height: 6px; border-radius: 999px; background: var(--panel-2); overflow: hidden; }
+  .bar i {
+    display: block; height: 100%; width: 0; border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), #0ea5e9); transition: width 0.3s ease;
+  }
+  .bar.indeterminate i { width: 30%; animation: slide 1.2s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+
+  .page-slot + .page-slot { margin-top: 0.85em; }
+  .page-slot.fresh { animation: fade 0.35s ease; }
+  .page-pending {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+    border: 1px dashed var(--border-strong); border-radius: 10px;
+    color: var(--muted); font-size: 13px;
+  }
+  .page-pending .spinner { color: var(--accent); width: 12px; height: 12px; }
+  .page-pending .line {
+    flex: 1; height: 8px; border-radius: 6px;
+    background: linear-gradient(90deg, var(--panel-2), var(--panel-3), var(--panel-2));
+    background-size: 200% 100%; animation: shimmer 1.4s ease infinite;
+  }
+  .page-failed {
+    padding: 10px 14px; border-radius: 10px; font-size: 13px;
+    background: var(--bad-soft); color: var(--bad);
+  }
+
+  .output-wrap { flex: 1; padding: 14px 18px 18px; display: flex; flex-direction: column; min-height: 0; }
+  .markdown-output {
+    flex: 1; border-radius: 10px; padding: 22px 28px;
+    max-height: calc(100vh - 230px); min-height: 360px; overflow: auto;
+    color: var(--text-2); border: 1px solid var(--border); background: var(--panel);
+  }
+  .markdown-output.raw {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+    white-space: pre-wrap; word-break: break-word; background: var(--code-bg); padding: 18px 20px;
+  }
+
+  /* Empty / loading states */
+  .state {
+    flex: 1; min-height: 360px; border: 1px dashed var(--border-strong); border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; color: var(--muted); padding: 32px;
+  }
+  .state .art {
+    width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); margin-bottom: 14px;
+  }
+  .state .art svg { width: 28px; height: 28px; }
+  .state h3 { margin: 0 0 4px; font-size: 15px; color: var(--text); font-weight: 600; }
+  .state p { margin: 0; font-size: 13px; max-width: 360px; }
+  .state .timer { font-family: var(--mono); font-size: 22px; color: var(--text); margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+  .loader { width: 64px; height: 64px; margin-bottom: 14px; position: relative; }
+  .loader::before, .loader::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    border: 3px solid var(--accent-soft); border-top-color: var(--accent);
+    animation: spin 0.9s linear infinite;
+  }
+  .loader::after { inset: 10px; border-top-color: #0ea5e9; animation-duration: 1.4s; animation-direction: reverse; }
+  .skeleton { width: 100%; max-width: 520px; margin-top: 22px; display: grid; gap: 8px; }
+  .skeleton i {
+    display: block; height: 10px; border-radius: 6px;
+    background: linear-gradient(90deg, var(--panel-2), var(--panel-3), var(--panel-2));
+    background-size: 200% 100%; animation: shimmer 1.4s ease infinite;
+  }
+  .skeleton i:nth-child(1) { width: 60%; height: 14px; }
+  .skeleton i:nth-child(3) { width: 92%; }
+  .skeleton i:nth-child(4) { width: 75%; }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- Rendered markdown ---------------------------------------------- */
+  .rendered { font-size: 15px; line-height: 1.75; }
+  .rendered > :first-child { margin-top: 0; }
+  .rendered h1, .rendered h2, .rendered h3, .rendered h4, .rendered h5, .rendered h6 {
+    margin: 1.5em 0 0.6em; color: var(--text); line-height: 1.35; font-weight: 650; letter-spacing: -0.01em;
+  }
+  .rendered h1 { font-size: 1.7em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
+  .rendered h2 { font-size: 1.35em; padding-bottom: 0.25em; border-bottom: 1px solid var(--border); }
+  .rendered h3 { font-size: 1.15em; }
+  .rendered h4 { font-size: 1em; }
+  .rendered p { margin: 0.85em 0; }
+  .rendered strong { color: var(--text); }
+  .rendered img { max-width: 100%; height: auto; border-radius: 8px; margin: 12px auto; display: block; border: 1px solid var(--border); }
+  .rendered img.broken { outline: 1px dashed var(--bad); padding: 4px; min-height: 40px; }
+  .rendered a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-ring); }
+  .rendered a:hover { border-bottom-color: var(--accent); }
+  .rendered code {
+    background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 5px;
+    font-family: var(--mono); font-size: 0.86em; color: var(--text);
+  }
+  .rendered pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.6;
+  }
+  .rendered pre code { background: transparent; padding: 0; font-size: inherit; }
+  .rendered blockquote {
+    border-left: 3px solid var(--accent); padding: 4px 14px; margin: 1em 0;
+    color: var(--muted); background: var(--accent-soft); border-radius: 0 8px 8px 0;
+  }
+  .rendered ul, .rendered ol { padding-left: 1.6em; margin: 0.7em 0; }
+  .rendered li { margin: 0.25em 0; }
+  .rendered li::marker { color: var(--muted); }
+  .rendered table {
+    border-collapse: separate; border-spacing: 0; margin: 1em 0; width: 100%;
+    font-size: 13.5px; line-height: 1.55; border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    display: block; overflow-x: auto;
+  }
+  .rendered th, .rendered td {
+    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 8px 12px; text-align: left; vertical-align: top;
+  }
+  .rendered tr > :last-child { border-right: none; }
+  .rendered tbody tr:last-child > *, .rendered table > tr:last-child > * { border-bottom: none; }
+  .rendered th { background: var(--panel-2); color: var(--text); font-weight: 600; }
+  .rendered tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--panel-2) 45%, transparent); }
+  .rendered hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+  .rendered details.frontmatter {
+    margin: 0 0 1.2em; padding: 8px 12px; background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 8px; font-size: 12px;
+  }
+  .rendered details.frontmatter summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+  .rendered details.frontmatter pre { margin: 8px 0 0; padding: 10px; background: var(--panel); }
+
+  /* Model menu */
+  .menu-wrap { position: relative; }
+  .pill-btn { cursor: pointer; font-family: inherit; transition: border-color 0.15s, color 0.15s; }
+  .pill-btn:hover, .pill-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--text); }
+  .pill-btn .chev { width: 13px; height: 13px; }
+  .menu {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 300px; max-width: calc(100vw - 32px);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(16,24,40,0.18); padding: 6px;
+  }
+  .menu-title { font-size: 11px; font-weight: 600; color: var(--muted); padding: 6px 10px 4px; letter-spacing: 0.04em; }
+  .menu-sep { height: 1px; background: var(--border); margin: 6px 4px; }
+  .menu-item {
+    width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
+    background: none; border: none; color: var(--text-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+  }
+  .menu-item:hover { background: var(--panel-2); color: var(--text); }
+  .model-item .mi-check { width: 16px; display: grid; place-items: center; color: var(--accent); flex-shrink: 0; }
+  .model-item .mi-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .model-item .mi-text b { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .model-item .mi-text small { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .model-item.active { background: var(--accent-soft); }
+  .mi-edit {
+    width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; flex-shrink: 0;
+    background: none; border: none; color: var(--muted); cursor: pointer;
+  }
+  .mi-edit:hover { background: var(--panel); color: var(--accent); }
+  .model-item .mi-text small.mi-status { display: flex; align-items: center; gap: 5px; margin-top: 2px; white-space: normal; }
+  .model-item .mi-status .dot { width: 6px; height: 6px; box-shadow: none; }
+  .model-item .mi-status.ok { color: var(--good); }
+  .model-item .mi-status.warn { color: var(--warn); }
+  .model-item .mi-status.err { color: var(--bad); }
+
+  /* Model dialog */
+  dialog {
+    border: 1px solid var(--border); border-radius: 14px; padding: 0; width: 440px; max-width: calc(100vw - 32px);
+    background: var(--panel); color: var(--text); box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+  }
+  dialog::backdrop { background: rgba(10, 12, 20, 0.45); backdrop-filter: blur(2px); }
+  dialog form { padding: 20px 22px; }
+  dialog h3 { margin: 0 0 16px; font-size: 16px; }
+  .dialog-note { font-size: 12px; color: var(--muted); margin-top: 12px; }
+  .dialog-actions { display: flex; align-items: center; gap: 6px; margin-top: 18px; }
+  .dialog-actions .spacer { flex: 1; }
+  .btn-solid {
+    background: var(--accent); color: var(--on-accent); border: none; padding: 7px 16px; border-radius: 8px;
+    font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-solid:hover:not(:disabled) { filter: brightness(1.06); }
+  .btn-solid:disabled { opacity: 0.6; cursor: progress; }
+  button.ghost.danger.confirm { color: var(--bad); background: var(--bad-soft); }
+
+  /* Parse mode */
+  .mode-block { margin-bottom: 16px; }
+  .mode-block .field { font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+  .seg-full { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; }
+  .seg-full button { justify-content: center; }
+  .mode-desc {
+    display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding: 8px 10px; border-radius: 8px;
+    font-size: 12px; line-height: 1.55; color: var(--text-2); background: var(--panel-2);
+  }
+  .mode-desc svg { width: 14px; height: 14px; margin-top: 2px; color: var(--accent); }
+  .mode-desc.flash { animation: flash 0.6s ease; }
+  @keyframes flash { from { background: var(--accent-soft); } to { background: var(--panel-2); } }
+
+  /* Tooltip */
+  .tip {
+    position: fixed; z-index: 60; max-width: 260px; padding: 8px 10px; border-radius: 8px;
+    background: var(--text); color: var(--bg); font-size: 12px; line-height: 1.55;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25); pointer-events: none;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0;
+    background: var(--text); color: var(--bg); padding: 9px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 550; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transition: all 0.2s ease; pointer-events: none; z-index: 50;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-pages" viewBox="0 0 24 24"><rect x="4" y="3" width="13" height="16" rx="2"/><path d="M8 21h10a2 2 0 0 0 2-2V7"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+  </defs>
+</svg>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div>
+        <h1>Any2Markdown</h1>
+        <div class="sub">文档 · 网页 → Markdown</div>
+      </div>
+    </div>
+    <div class="meta" id="meta">
+      <div class="menu-wrap">
+        <button class="pill pill-btn" id="btn-model" title="选择模型" aria-haspopup="true">
+          <span class="dot" id="model-dot"></span><b id="model-name">-</b><svg class="i chev"><use href="#i-chevron"/></svg>
+        </button>
+        <div class="menu" id="model-menu" hidden>
+          <div class="menu-title">选择模型</div>
+          <div id="model-list"></div>
+          <div class="menu-sep"></div>
+          <button class="menu-item" id="btn-model-add"><svg class="i"><use href="#i-plus"/></svg>新增模型</button>
+        </div>
+      </div>
+      <button class="icon-btn" id="btn-theme" title="切换主题"><svg class="i"><use href="#i-moon"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <aside class="side">
+    <section class="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="file"><svg class="i"><use href="#i-file"/></svg>文件</button>
+        <button class="tab" data-tab="url"><svg class="i"><use href="#i-globe"/></svg>网页</button>
+      </div>
+
+      <div class="panel-body">
+        <div class="mode-block">
+          <div class="field">解析方式</div>
+          <div class="seg seg-full" id="mode-seg">
+            <button class="ghost" data-mode="ocr">OCR</button>
+            <button class="ghost" data-mode="auto">自动</button>
+            <button class="ghost" data-mode="direct">直接解析</button>
+          </div>
+          <div class="mode-desc" id="mode-desc"></div>
+        </div>
+
+        <div class="tab-content active" data-tab="file">
+          <div class="drop-zone" id="drop-zone">
+            <div class="dz-icon"><svg class="i"><use href="#i-upload"/></svg></div>
+            <div class="dz-title"><em>点击选择</em> 或拖入文件</div>
+            <div class="hint">也可直接 <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴文件 / 截图</div>
+            <div class="formats"><span>PDF</span><span>DOCX</span><span>PPTX</span><span>XLSX</span><span>PNG</span><span>JPG</span></div>
+            <input type="file" id="file-input" hidden />
+          </div>
+          <div class="file-card" id="file-card" hidden>
+            <div class="file-badge" id="file-badge">FILE</div>
+            <div class="file-info">
+              <div class="name" id="filename"></div>
+              <div class="size" id="filesize"></div>
+            </div>
+            <button class="ghost danger" id="btn-clear-file" title="移除"><svg class="i"><use href="#i-x"/></svg></button>
+          </div>
+          <button class="primary" id="btn-file"><svg class="i"><use href="#i-sparkle"/></svg>转换为 Markdown</button>
+        </div>
+
+        <div class="tab-content" data-tab="url">
+          <label class="field" for="url-input">网页地址</label>
+          <div class="input-icon">
+            <svg class="i"><use href="#i-link"/></svg>
+            <input type="url" id="url-input" placeholder="https://example.com/article" />
+          </div>
+          <label class="switch-row">
+            <span class="switch"><input type="checkbox" id="url-download-images" checked /><span class="track"></span></span>
+            <span class="txt">下载图片到本地<small>缓存网页图片，结果图文并茂、链接不易失效</small></span>
+          </label>
+          <button class="primary" id="btn-url"><svg class="i"><use href="#i-globe"/></svg>抓取并转换</button>
+        </div>
+        <div class="kbd-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> 快速提交</div>
+      </div>
+    </section>
+  </aside>
+
+  <section class="panel result">
+    <div class="result-toolbar">
+      <div class="seg">
+        <button class="ghost active" id="btn-view-render"><svg class="i"><use href="#i-eye"/></svg>预览</button>
+        <button class="ghost" id="btn-view-raw"><svg class="i"><use href="#i-code"/></svg>源码</button>
+      </div>
+      <div class="actions">
+        <button class="ghost danger" id="btn-stop" hidden><svg class="i"><use href="#i-x"/></svg>停止</button>
+        <button class="ghost" id="btn-copy" disabled><svg class="i"><use href="#i-copy"/></svg><span>复制</span></button>
+        <button class="ghost" id="btn-download" disabled><svg class="i"><use href="#i-download"/></svg>下载 .md</button>
+      </div>
+    </div>
+    <div class="result-head">
+      <div class="run" id="run" hidden>
+        <div class="phases" id="phases"></div>
+        <div class="bar" id="run-bar"><i id="run-bar-fill"></i></div>
+        <div class="run-detail" id="run-detail"></div>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div id="error-box" class="notice error" hidden><svg class="i"><use href="#i-alert"/></svg><div class="msg" id="error-msg"></div></div>
+      <div id="image-summary" class="notice info" hidden></div>
+    </div>
+    <div class="output-wrap">
+      <div class="state" id="state-empty">
+        <div class="art"><svg class="i"><use href="#i-sparkle"/></svg></div>
+        <h3>准备就绪</h3>
+        <p>在左侧上传文件或输入网页地址，转换结果会逐页显示在这里。</p>
+      </div>
+      <div class="state" id="state-loading" hidden>
+        <div class="loader"></div>
+        <h3 id="loading-title">处理中…</h3>
+        <div class="timer" id="loading-timer">0.0s</div>
+        <p>大文件或扫描件可能需要较长时间，请耐心等待</p>
+        <div class="skeleton"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="markdown-output rendered" id="output" hidden></div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"><svg class="i"><use href="#i-check"/></svg><span id="toast-msg"></span></div>
+<div class="tip" id="tip" hidden></div>
+
+<dialog id="model-dialog">
+  <form id="model-form" novalidate>
+    <h3 id="mf-title">编辑模型</h3>
+    <label class="field" for="mf-name">显示名称</label>
+    <input type="text" id="mf-name" placeholder="例如 xiaomi-ocr-0" />
+    <label class="field field-gap" for="mf-model">模型名（请求里的 model）</label>
+    <input type="text" id="mf-model" placeholder="xiaomi-ocr-0" />
+    <label class="field field-gap" for="mf-base">Base URL（OpenAI 兼容接口）</label>
+    <input type="url" id="mf-base" placeholder="http://host:port/v1" />
+    <label class="field field-gap" for="mf-key">API Key</label>
+    <input type="password" id="mf-key" autocomplete="new-password" />
+    <div class="dialog-note">配置保存在服务器上，所有使用者共享；API Key 不会回传到浏览器。</div>
+    <div class="notice error" id="mf-error" hidden><svg class="i"><use href="#i-alert"/></svg><div class="msg"></div></div>
+    <div class="dialog-actions">
+      <button type="button" class="ghost danger" id="mf-delete">删除</button>
+      <span class="spacer"></span>
+      <button type="button" class="ghost" id="mf-cancel">取消</button>
+      <button type="submit" class="btn-solid" id="mf-save">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+'use strict';
+const $ = (s) => document.querySelector(s);
+const output = $('#output');
+const errBox = $('#error-box');
+const stats = $('#stats');
+const imgSum = $('#image-summary');
+const stateEmpty = $('#state-empty');
+const stateLoading = $('#state-loading');
+
+let lastResult = null;        // last response
+let lastName = 'output';      // base name for download
+let viewMode = 'render';      // 'render' | 'raw'
+let busy = false;
+
+const icon = (name) => `<svg class="i"><use href="#i-${name}"/></svg>`;
+
+// ---- Theme -----------------------------------------------------------------
+function currentTheme() {
+  const t = document.documentElement.dataset.theme;
+  if (t) return t;
+  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function paintThemeIcon() {
+  $('#btn-theme').innerHTML = icon(currentTheme() === 'dark' ? 'sun' : 'moon');
+}
+try {
+  const saved = localStorage.getItem('a2m-theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+} catch {}
+paintThemeIcon();
+$('#btn-theme').addEventListener('click', () => {
+  const next = currentTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('a2m-theme', next); } catch {}
+  paintThemeIcon();
+});
+
+// ---- markdown renderer (minimal, focused on image display) -----------------
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderInline(text) {
+  // Stash markup as placeholders, escape rest, then restore.
+  const stash = [];
+  const ph = (html) => { stash.push(html); return `\x01${stash.length - 1}\x02`; };
+  let s = text;
+  // image first (longest-match, prevents [text](url) false positive)
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g,
+      (m, alt, url) => ph(`<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" loading="lazy" onerror="this.classList.add('broken')">`));
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g,
+      (m, txt, url) => ph(`<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(txt)}</a>`));
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, (m, x) => ph(`<strong>${escapeHtml(x)}</strong>`));
+  s = s.replace(/(?<![\w*])\*([^*\n]+)\*(?![\w*])/g, (m, x) => ph(`<em>${escapeHtml(x)}</em>`));
+  s = s.replace(/`([^`\n]+)`/g, (m, x) => ph(`<code>${escapeHtml(x)}</code>`));
+  s = escapeHtml(s);
+  s = s.replace(/\x01(\d+)\x02/g, (m, idx) => stash[parseInt(idx, 10)]);
+  return s;
+}
+
+function renderMd(md) {
+  if (!md) return '';
+  // 1. Stash raw <table>...</table> blocks (model-emitted HTML tables) so they pass through.
+  const tableStash = [];
+  md = md.replace(/<table[\s\S]*?<\/table>/gi, (m) => {
+    tableStash.push(m);
+    return `\x03${tableStash.length - 1}\x04`;
+  });
+
+  const lines = md.split('\n');
+  const out = [];
+  let i = 0;
+
+  // Frontmatter at top → collapsible block
+  if (lines[0] === '---') {
+    let j = 1;
+    while (j < lines.length && lines[j] !== '---') j++;
+    if (j < lines.length) {
+      const fm = lines.slice(1, j).join('\n');
+      out.push(`<details class="frontmatter"><summary>frontmatter</summary><pre>${escapeHtml(fm)}</pre></details>`);
+      i = j + 1;
+    }
+  }
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Code fence
+    if (/^```/.test(line)) {
+      const lang = line.replace(/^```/, '').trim();
+      const buf = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      out.push(`<pre><code${lang ? ` class="lang-${escapeHtml(lang)}"` : ''}>${escapeHtml(buf.join('\n'))}</code></pre>`);
+      continue;
+    }
+
+    // Heading
+    const h = line.match(/^(#{1,6})\s+(.+)$/);
+    if (h) {
+      out.push(`<h${h[1].length}>${renderInline(h[2])}</h${h[1].length}>`);
+      i++;
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^[-_*]{3,}\s*$/.test(line)) { out.push('<hr>'); i++; continue; }
+
+    // Blockquote
+    if (/^>\s?/.test(line)) {
+      const buf = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) {
+        buf.push(lines[i].replace(/^>\s?/, ''));
+        i++;
+      }
+      out.push(`<blockquote>${renderInline(buf.join(' '))}</blockquote>`);
+      continue;
+    }
+
+    // List
+    if (/^\s*([-*+]|\d+\.)\s+/.test(line)) {
+      const ordered = /^\s*\d+\./.test(line);
+      const buf = [];
+      while (i < lines.length && /^\s*([-*+]|\d+\.)\s+/.test(lines[i])) {
+        buf.push(lines[i].replace(/^\s*([-*+]|\d+\.)\s+/, ''));
+        i++;
+      }
+      const items = buf.map(t => `<li>${renderInline(t)}</li>`).join('');
+      out.push(ordered ? `<ol>${items}</ol>` : `<ul>${items}</ul>`);
+      continue;
+    }
+
+    // Markdown table (pipe style)
+    if (/^\s*\|.*\|/.test(line) && i + 1 < lines.length && /^\s*\|?\s*:?-+/.test(lines[i + 1])) {
+      const splitRow = (l) => l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+      const header = splitRow(line);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && /^\s*\|.*\|/.test(lines[i])) { rows.push(splitRow(lines[i])); i++; }
+      const thead = '<tr>' + header.map(c => `<th>${renderInline(c)}</th>`).join('') + '</tr>';
+      const tbody = rows.map(r => '<tr>' + r.map(c => `<td>${renderInline(c)}</td>`).join('') + '</tr>').join('');
+      out.push(`<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`);
+      continue;
+    }
+
+    // Empty line → paragraph break
+    if (!line.trim()) { i++; continue; }
+
+    // Stashed table placeholder line on its own → keep as-is
+    if (/^\x03\d+\x04$/.test(line.trim())) {
+      out.push(line.trim());
+      i++;
+      continue;
+    }
+
+    // Paragraph: gather consecutive non-block lines
+    const buf = [line];
+    i++;
+    while (i < lines.length && lines[i].trim()
+        && !/^(#{1,6}\s|>|```|\s*\|.*\|\s*$|---|\s*[-*+]\s|\s*\d+\.\s)/.test(lines[i])
+        && !/^\x03\d+\x04$/.test(lines[i].trim())) {
+      buf.push(lines[i]);
+      i++;
+    }
+    out.push(`<p>${renderInline(buf.join(' '))}</p>`);
+  }
+
+  // Restore stashed HTML tables
+  let html = out.join('\n');
+  html = html.replace(/\x03(\d+)\x04/g, (m, idx) => tableStash[parseInt(idx, 10)]);
+  return html;
+}
+
+// ---- Tabs ------------------------------------------------------------------
+let activeTab = 'file';
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === btn));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.dataset.tab === activeTab));
+    renderModeDesc(false);
+  });
+});
+
+// ---- Local storage ---------------------------------------------------------
+function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+
+// ---- Parse mode ------------------------------------------------------------
+const MODES = {
+  auto: '优先直接提取文件自带的文字（有文字层的 PDF、Word / PPT / Excel），速度快、不调用模型；扫描页、图片、旧版 Office 自动交给模型识别。',
+  direct: '只提取文件自带的文字，完全不调用模型，最快。扫描件、图片没有文字层，会直接报错。',
+  ocr: '每页转成图片交给模型识别。表格、公式、版式还原最好；适合扫描件，或直接解析效果不理想时。',
+};
+const storedMode = MODES[lsGet('a2m-mode')] ? lsGet('a2m-mode') : null;
+let parseMode = storedMode || 'ocr';
+
+function renderModeDesc(flash) {
+  const desc = $('#mode-desc');
+  let text = MODES[parseMode];
+  if (activeTab === 'url') text += ' 网页文章不受影响，仅对链接指向的 PDF / Office 文件生效。';
+  desc.innerHTML = icon('info') + `<span>${escapeHtml(text)}</span>`;
+  if (flash) { desc.classList.remove('flash'); void desc.offsetWidth; desc.classList.add('flash'); }
+}
+function setMode(mode, save) {
+  if (!MODES[mode]) return;
+  const changed = mode !== parseMode;
+  parseMode = mode;
+  if (save) lsSet('a2m-mode', mode);
+  document.querySelectorAll('#mode-seg button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  renderModeDesc(changed);
+}
+document.querySelectorAll('#mode-seg button').forEach(b => {
+  b.dataset.tip = MODES[b.dataset.mode];
+  b.addEventListener('click', () => setMode(b.dataset.mode, true));
+});
+setMode(parseMode, false);
+renderModeDesc(false);
+
+// Floating tooltip for [data-tip] (positioned on <body> so panels can't clip it)
+const tip = $('#tip');
+document.addEventListener('mouseover', (e) => {
+  const el = e.target.closest && e.target.closest('[data-tip]');
+  if (!el) return;
+  tip.textContent = el.dataset.tip;
+  tip.hidden = false;
+  const r = el.getBoundingClientRect();
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+  const top = r.bottom + 8 + h > innerHeight ? r.top - h - 8 : r.bottom + 8;
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+});
+document.addEventListener('mouseout', (e) => {
+  const el = e.target.closest && e.target.closest('[data-tip]');
+  if (el && !el.contains(e.relatedTarget)) tip.hidden = true;
+});
+
+// ---- Model profiles --------------------------------------------------------
+let models = { default: null, profiles: [] };
+let selectedModel = null;
+const modelMenu = $('#model-menu');
+const btnModel = $('#btn-model');
+
+function hostOf(u) { try { return new URL(u).host; } catch { return u; } }
+
+function applyModels(d) {
+  models = d;
+  const ids = d.profiles.map(p => p.id);
+  if (!ids.includes(selectedModel)) {
+    const saved = lsGet('a2m-model');
+    selectedModel = ids.includes(saved) ? saved : d.default;
+  }
+  renderModels();
+}
+
+// ---- Model online status ---------------------------------------------------
+const modelStatus = {};        // id -> { state: 'checking' | 'ok' | 'warn' | 'err', text }
+
+function statusOf(id) { return modelStatus[id] || { state: '', text: '' }; }
+function dotClass(s) { return { ok: 'ok', warn: 'warn', err: 'err', checking: 'checking' }[s.state] || ''; }
+
+async function checkModel(id) {
+  if (!id) return null;
+  modelStatus[id] = { state: 'checking', text: '检查中…' };
+  renderModels();
+  let s;
+  try {
+    const d = await handleResponse(await fetch(`/models/${encodeURIComponent(id)}/status`));
+    if (d.online && d.model_found !== false) s = { state: 'ok', text: `在线 · ${d.latency_ms} ms` };
+    else if (d.online) s = { state: 'warn', text: d.error };
+    else s = { state: 'err', text: d.error || '离线' };
+  } catch (e) {
+    s = { state: 'err', text: e.message };
+  }
+  modelStatus[id] = s;
+  renderModels();
+  return s;
+}
+
+function renderModels() {
+  const cur = models.profiles.find(p => p.id === selectedModel);
+  const cs = cur ? statusOf(cur.id) : statusOf(null);
+  $('#model-name').textContent = cur ? cur.name : '-';
+  $('#model-dot').className = 'dot ' + dotClass(cs);
+  btnModel.title = cur ? `${cur.model} @ ${hostOf(cur.base_url)}${cs.text ? '\n' + cs.text : ''}` : '选择模型';
+  $('#model-list').innerHTML = models.profiles.map(p => {
+    const on = p.id === selectedModel;
+    const s = statusOf(p.id);
+    return `<div class="menu-item model-item${on ? ' active' : ''}" data-id="${escapeHtml(p.id)}" role="button" tabindex="0">
+      <span class="mi-check">${on ? icon('check') : ''}</span>
+      <span class="mi-text"><b>${escapeHtml(p.name)}</b><small>${escapeHtml(p.model)} · ${escapeHtml(hostOf(p.base_url))}${p.has_api_key ? '' : ' · 未配置 Key'}</small>${s.text ? `<small class="mi-status ${dotClass(s)}"><span class="dot ${dotClass(s)}"></span>${escapeHtml(s.text)}</small>` : ''}</span>
+      <button class="mi-edit" data-check="${escapeHtml(p.id)}" title="检查是否在线">${icon('refresh')}</button>
+      <button class="mi-edit" data-edit="${escapeHtml(p.id)}" title="编辑">${icon('edit')}</button>
+    </div>`;
+  }).join('');
+}
+
+async function loadModels() {
+  try {
+    const r = await fetch('/models');
+    if (!r.ok) throw new Error();
+    applyModels(await r.json());
+    checkModel(selectedModel);
+  } catch {
+    $('#model-name').textContent = '-';
+    $('#model-dot').className = 'dot err';
+    btnModel.title = '无法连接服务';
+  }
+}
+
+function toggleMenu(open) {
+  modelMenu.hidden = !open;
+  btnModel.setAttribute('aria-expanded', String(open));
+}
+btnModel.addEventListener('click', () => toggleMenu(modelMenu.hidden));
+document.addEventListener('click', (e) => {
+  if (!modelMenu.hidden && !e.target.closest('.menu-wrap')) toggleMenu(false);
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleMenu(false); });
+
+$('#model-list').addEventListener('click', (e) => {
+  const check = e.target.closest('[data-check]');
+  if (check) { e.stopPropagation(); checkModel(check.dataset.check); return; }
+  const edit = e.target.closest('[data-edit]');
+  if (edit) { toggleMenu(false); openModelDialog(edit.dataset.edit); return; }
+  const item = e.target.closest('.model-item');
+  if (!item) return;
+  selectedModel = item.dataset.id;
+  lsSet('a2m-model', selectedModel);
+  renderModels();
+  toggleMenu(false);
+  toast('已切换到 ' + $('#model-name').textContent);
+  checkModel(selectedModel);
+});
+$('#btn-model-add').addEventListener('click', () => { toggleMenu(false); openModelDialog(null); });
+
+const dlg = $('#model-dialog');
+let editingId = null;
+
+function dialogError(msg) {
+  const box = $('#mf-error');
+  box.querySelector('.msg').textContent = msg || '';
+  box.hidden = !msg;
+}
+function resetDeleteBtn() {
+  const b = $('#mf-delete');
+  b.classList.remove('confirm');
+  b.textContent = '删除';
+}
+
+function openModelDialog(id) {
+  editingId = id;
+  const p = id ? models.profiles.find(x => x.id === id) : null;
+  $('#mf-title').textContent = p ? '编辑模型' : '新增模型';
+  $('#mf-name').value = p ? p.name : '';
+  $('#mf-model').value = p ? p.model : '';
+  $('#mf-base').value = p ? p.base_url : '';
+  $('#mf-key').value = '';
+  $('#mf-key').placeholder = p && p.has_api_key ? '已配置，留空则不修改' : '没有可留空';
+  $('#mf-delete').hidden = !p || models.profiles.length <= 1;
+  resetDeleteBtn();
+  dialogError('');
+  dlg.showModal();
+  $('#mf-name').focus();
+}
+$('#mf-cancel').addEventListener('click', () => dlg.close());
+// Keep the model name in step with the display name while the latter is untouched.
+$('#mf-model').addEventListener('input', () => {
+  if (!editingId && !$('#mf-name').dataset.touched) $('#mf-name').value = $('#mf-model').value;
+});
+$('#mf-name').addEventListener('input', () => { $('#mf-name').dataset.touched = '1'; });
+dlg.addEventListener('close', () => { delete $('#mf-name').dataset.touched; });
+
+async function modelRequest(method, url, body) {
+  const resp = await fetch(url, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return handleResponse(resp);
+}
+
+$('#model-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    name: $('#mf-name').value.trim(),
+    model: $('#mf-model').value.trim(),
+    base_url: $('#mf-base').value.trim(),
+    api_key: $('#mf-key').value.trim() || null,
+  };
+  if (!body.model) { dialogError('请填写模型名'); return; }
+  if (!body.name) body.name = body.model;
+  if (!/^https?:\/\//.test(body.base_url)) { dialogError('Base URL 需以 http:// 或 https:// 开头'); return; }
+  const save = $('#mf-save');
+  save.disabled = true;
+  try {
+    const d = editingId
+      ? await modelRequest('PUT', `/models/${encodeURIComponent(editingId)}`, body)
+      : await modelRequest('POST', '/models', body);
+    if (!editingId) { selectedModel = d.id; lsSet('a2m-model', d.id); }
+    applyModels(d);
+    const savedId = editingId || d.id;
+    $('#mf-save').textContent = '检查连接…';
+    const s = await checkModel(savedId);
+    if (s.state === 'ok') {
+      dlg.close();
+      toast((editingId ? '已保存' : '已新增并切换到 ' + body.name) + '，模型在线');
+    } else {
+      // Saved either way; keep the dialog open so the config can be fixed.
+      editingId = savedId;
+      $('#mf-title').textContent = '编辑模型';
+      $('#mf-delete').hidden = models.profiles.length <= 1;
+      $('#mf-key').value = '';
+      $('#mf-key').placeholder = '已配置，留空则不修改';
+      dialogError(`已保存，但${s.state === 'warn' ? '' : '模型不在线：'}${s.text}。可修改后重新保存，或直接关闭。`);
+    }
+  } catch (err) {
+    dialogError(err.message);
+  } finally {
+    save.disabled = false;
+    save.textContent = '保存';
+  }
+});
+
+$('#mf-delete').addEventListener('click', async () => {
+  const b = $('#mf-delete');
+  if (!b.classList.contains('confirm')) {
+    b.classList.add('confirm');
+    b.textContent = '确认删除？';
+    return;
+  }
+  try {
+    applyModels(await modelRequest('DELETE', `/models/${encodeURIComponent(editingId)}`));
+    dlg.close();
+    toast('模型已删除');
+  } catch (err) {
+    dialogError(err.message);
+    resetDeleteBtn();
+  }
+});
+
+loadModels();
+
+// ---- File drop zone --------------------------------------------------------
+const dropZone = $('#drop-zone');
+const fileInput = $('#file-input');
+let selectedFile = null;
+
+const BADGE_COLORS = {
+  PDF: '#e5484d', DOC: '#2563eb', DOCX: '#2563eb', PPT: '#ea580c', PPTX: '#ea580c',
+  XLS: '#16a34a', XLSX: '#16a34a', PNG: '#9333ea', JPG: '#9333ea', JPEG: '#9333ea',
+  WEBP: '#9333ea', GIF: '#9333ea', BMP: '#9333ea', TIF: '#9333ea', TIFF: '#9333ea',
+};
+
+function setFile(f) {
+  selectedFile = f;
+  if (!f) {
+    fileInput.value = '';
+    $('#file-card').hidden = true;
+    dropZone.hidden = false;
+    return;
+  }
+  const ext = (f.name.split('.').pop() || '').toUpperCase();
+  const badge = $('#file-badge');
+  badge.textContent = (ext && ext !== f.name.toUpperCase()) ? ext.slice(0, 4) : 'FILE';
+  badge.style.background = BADGE_COLORS[ext] || 'var(--muted)';
+  $('#filename').textContent = f.name;
+  $('#filename').title = f.name;
+  $('#filesize').textContent = formatBytes(f.size);
+  $('#file-card').hidden = false;
+  dropZone.hidden = true;
+}
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+$('#btn-clear-file').addEventListener('click', () => setFile(null));
+$('#file-card').addEventListener('click', (e) => { if (!e.target.closest('button')) fileInput.click(); });
+
+// Allow dropping anywhere on the page
+let dragDepth = 0;
+document.addEventListener('dragenter', (e) => {
+  if (!e.dataTransfer || !Array.from(e.dataTransfer.types).includes('Files')) return;
+  dragDepth++;
+  switchTab('file');
+  dropZone.hidden = false;
+  $('#file-card').hidden = true;
+  dropZone.classList.add('dragover');
+});
+document.addEventListener('dragleave', () => {
+  if (--dragDepth <= 0) {
+    dragDepth = 0;
+    dropZone.classList.remove('dragover');
+    if (selectedFile) setFile(selectedFile);
+  }
+});
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer && e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+  else if (selectedFile) setFile(selectedFile);
+});
+
+// Paste a file / screenshot
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData ? Array.from(e.clipboardData.files || []) : [];
+  if (!items.length) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag === 'TEXTAREA' || tag === 'INPUT') return;
+  e.preventDefault();
+  let f = items[0];
+  if (!f.name || f.name === 'image.png') {
+    const ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+    f = new File([f], `pasted-${Date.now()}.${ext}`, { type: f.type });
+  }
+  switchTab('file');
+  setFile(f);
+  toast('已粘贴文件');
+});
+
+function switchTab(name) {
+  const btn = document.querySelector(`.tab[data-tab="${name}"]`);
+  if (btn && activeTab !== name) btn.click();
+}
+
+function formatBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1024 / 1024).toFixed(2) + ' MB';
+}
+function formatMs(ms) {
+  return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(ms < 10000 ? 2 : 1)} s`;
+}
+
+// ---- Busy / loading state --------------------------------------------------
+const STAGE_LABELS = { parsing: '解析文档…', rendering: '渲染页面…', ocr: '模型识别中…' };
+const PHASE_LABELS = { upload: '上传', receive: '服务器接收', fetch: '抓取', parsing: '直接解析', rendering: '渲染', ocr: '模型识别' };
+let timerHandle = null;
+let current = null;           // in-flight request: { promise, abort() }
+let streamPages = null;       // per-page results of a streamed conversion (null = not paged)
+let phases = [];              // [{ key, start, end, ms? }]
+let runStart = 0;
+
+let busyBtn = null;           // submit button of the in-flight request
+
+// Keep the submit button and the result panel saying the same thing.
+function setStage(text) {
+  $('#loading-title').textContent = text;
+  if (busy && busyBtn) busyBtn.innerHTML = '<span class="spinner"></span>' + escapeHtml(text);
+}
+
+function fmtDur(ms) { return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`; }
+function phaseMs(p) { return p.ms ?? ((p.end ?? performance.now()) - p.start); }
+
+function renderPhases() {
+  $('#phases').innerHTML = phases.map((p, i) => {
+    const active = p.end === undefined;
+    return `<span class="phase${active ? ' active' : ''}" data-i="${i}">` +
+      (active ? '<span class="spinner"></span>' : icon('check')) +
+      `${PHASE_LABELS[p.key] || p.key}<b>${fmtDur(phaseMs(p))}</b></span>`;
+  }).join('<span class="phase-sep">›</span>');
+}
+
+// Ends the running phase and (if key is given) starts the next one.
+function startPhase(key) {
+  const now = performance.now();
+  const cur = phases[phases.length - 1];
+  if (cur && cur.end === undefined) cur.end = now;
+  if (key) phases.push({ key, start: now });
+  renderPhases();
+}
+
+// Close the timeline; server-measured durations replace the client's estimates.
+function finishPhases(timings) {
+  startPhase(null);
+  if (timings) {
+    for (const p of phases) {
+      const ms = timings[`${p.key}_ms`];
+      if (ms !== undefined) p.ms = ms;
+    }
+  }
+  // Highlight the phase that dominated the run.
+  const total = phases.reduce((s, p) => s + phaseMs(p), 0);
+  renderPhases();
+  if (phases.length > 1 && total > 3000) {
+    let slow = 0;
+    phases.forEach((p, i) => { if (phaseMs(p) > phaseMs(phases[slow])) slow = i; });
+    const el = document.querySelector(`.phase[data-i="${slow}"]`);
+    if (el) { el.classList.add('slow'); el.title = '耗时最长的阶段'; }
+  }
+}
+
+function setBar(mode, pct) {
+  const bar = $('#run-bar');
+  bar.hidden = mode === 'hidden';
+  bar.classList.toggle('indeterminate', mode === 'indeterminate');
+  $('#run-bar-fill').style.width = mode === 'pct' ? `${Math.max(0, Math.min(100, pct))}%` : '';
+}
+function setDetail(text) { $('#run-detail').textContent = text || ''; }
+
+function tick() {
+  $('#loading-timer').textContent = ((performance.now() - runStart) / 1000).toFixed(1) + 's';
+  const cur = phases[phases.length - 1];
+  if (cur && cur.end === undefined) {
+    const b = document.querySelector(`.phase[data-i="${phases.length - 1}"] b`);
+    if (b) b.textContent = fmtDur(phaseMs(cur));
+  }
+}
+
+function setBusy(btn, on, label) {
+  busy = on;
+  busyBtn = on ? btn : null;
+  document.querySelectorAll('button.primary').forEach(b => { b.disabled = on; });
+  btn.innerHTML = on ? '<span class="spinner"></span>' + (label || '处理中…') : btn.dataset.label;
+  $('#btn-stop').hidden = !on;
+  clearInterval(timerHandle);
+  if (on) {
+    runStart = performance.now();
+    phases = [];
+    renderPhases();
+    setStage(label || '处理中…');
+    setBar('indeterminate');
+    setDetail('');
+    $('#run').hidden = false;
+    $('#loading-timer').textContent = '0.0s';
+    timerHandle = setInterval(tick, 100);
+    stateEmpty.hidden = true;
+    output.hidden = true;
+    stateLoading.hidden = false;
+  } else {
+    stateLoading.hidden = true;
+    setBar('hidden');
+    setDetail('');
+    if (!lastResult && !streamPages) stateEmpty.hidden = false;
+  }
+}
+
+function resetResult() {
+  lastResult = null;
+  streamPages = null;
+  stats.innerHTML = '';
+  imgSum.hidden = true;
+  $('#run').hidden = true;
+  $('#btn-copy').disabled = true;
+  $('#btn-download').disabled = true;
+  output.innerHTML = '';
+  output.hidden = true;
+}
+
+function showError(msg) {
+  $('#error-msg').textContent = msg;
+  errBox.hidden = false;
+  if (!busy && !lastResult && !streamPages) stateEmpty.hidden = false;
+}
+function clearError() { errBox.hidden = true; $('#error-msg').textContent = ''; }
+
+function preferredMarkdown(d) {
+  return (d && d.markdown_localized) ? d.markdown_localized : (d && d.markdown) || '';
+}
+
+// ---- Streamed pages --------------------------------------------------------
+// Mirrors any2markdown.assembler.Assembler, skipping pages not yet finished.
+function assemblePages(pages) {
+  return pages
+    .map((p, i) => !p ? null
+      : p.success ? p.markdown
+      : `<!-- Page ${i + 1}: conversion failed - ${p.error} -->`)
+    .filter(s => s !== null)
+    .join('\n\n');
+}
+
+function slotHtml(i) {
+  const p = streamPages[i];
+  if (!p) {
+    return busy
+      ? `<div class="page-pending"><span class="spinner"></span>第 ${i + 1} 页 识别中<span class="line"></span></div>`
+      : `<div class="page-pending">第 ${i + 1} 页 未完成</div>`;
+  }
+  if (!p.success) return `<div class="page-failed">第 ${i + 1} 页转换失败：${escapeHtml(p.error || '未知错误')}</div>`;
+  return renderMd(p.markdown);
+}
+
+function updateProgress() {
+  const total = streamPages.length;
+  const done = streamPages.filter(Boolean).length;
+  const cur = phases[phases.length - 1];
+  if (cur && cur.key === 'ocr' && cur.end === undefined) {
+    setBar('pct', total ? (done / total) * 100 : 0);
+    setDetail(`已完成 ${done} / ${total} 页`);
+  }
+}
+
+function beginPages(total) {
+  streamPages = new Array(total).fill(null);
+  if (!total) return;
+  stateLoading.hidden = true;
+  updateProgress();
+  paintOutput();
+}
+
+function addPage(p) {
+  if (!streamPages) beginPages(p.page_index + 1);
+  const grew = p.page_index >= streamPages.length;
+  while (streamPages.length <= p.page_index) streamPages.push(null);
+  streamPages[p.page_index] = p;
+  updateProgress();
+  const slot = !grew && viewMode === 'render'
+    && output.querySelector(`.page-slot[data-page="${p.page_index}"]`);
+  if (slot) {
+    slot.innerHTML = slotHtml(p.page_index);
+    slot.classList.add('fresh');
+  } else {
+    paintOutput();
+  }
+}
+
+function paintOutput() {
+  const paged = !!(streamPages && streamPages.length);
+  if (!lastResult && !paged) { output.innerHTML = ''; output.hidden = true; return; }
+  stateEmpty.hidden = true;
+  stateLoading.hidden = true;
+  output.hidden = false;
+  if (viewMode === 'raw') {
+    output.classList.remove('rendered');
+    output.classList.add('raw');
+    output.textContent = lastResult ? preferredMarkdown(lastResult) : assemblePages(streamPages);
+  } else {
+    output.classList.remove('raw');
+    output.classList.add('rendered');
+    output.innerHTML = paged
+      ? streamPages.map((_, i) => `<section class="page-slot" data-page="${i}">${slotHtml(i)}</section>`).join('')
+      : (renderMd(preferredMarkdown(lastResult)) || '<p style="color:var(--muted)">（结果为空）</p>');
+  }
+}
+
+function chip(iconName, label, value, cls) {
+  return `<span class="chip ${cls || ''}">${iconName ? icon(iconName) : ''}${label ? label + ' ' : ''}<b>${value}</b></span>`;
+}
+
+function showResult(d, name) {
+  clearError();
+  lastResult = d;
+  lastName = name || 'output';
+  const parts = [chip('clock', '总计', formatMs(runStart ? Math.round(performance.now() - runStart) : d.elapsed_ms))];
+  if (d.parse_mode_used) parts.push(chip('sparkle', '模式', escapeHtml(d.parse_mode_used), 'accent'));
+  if (d.total_pages !== undefined) {
+    parts.push(chip('pages', '页数', d.total_pages));
+    const failed = d.failed_pages || [];
+    parts.push(failed.length
+      ? `<span class="chip err" title="失败页: ${escapeHtml(failed.join(', '))}">${icon('alert')}失败页 <b>${failed.length}</b></span>`
+      : chip('check', '', '全部成功', 'ok'));
+  }
+  if (d.source_filename) parts.push(chip('file', '', escapeHtml(d.source_filename)));
+  const src = d.source || {};
+  if (src.title) parts.push(chip('text', '', escapeHtml(src.title)));
+  if (src.author) parts.push(chip('user', '', escapeHtml(src.author)));
+  if (src.url) parts.push(`<span class="chip">${icon('link')}<a href="${escapeHtml(src.url)}" target="_blank" rel="noopener">${escapeHtml(src.url.replace(/^https?:\/\//, ''))}</a></span>`);
+  const md = preferredMarkdown(d);
+  parts.push(chip('', '', `${md.length.toLocaleString()} 字符`));
+  stats.innerHTML = parts.join('');
+
+  if (Array.isArray(d.images) && d.images.length) {
+    const ok = d.images.filter(i => i.status === 'ok').length;
+    const total = d.images.length;
+    const failed = total - ok;
+    imgSum.className = 'notice ' + (failed ? 'warn' : 'info');
+    imgSum.innerHTML = `${icon('image')}<div class="msg">图片已本地化：成功 <b class="ok">${ok}</b> / 共 <b>${total}</b>` +
+      (failed ? ` · 失败 <b class="bad">${failed}</b>` : '') + '</div>';
+    imgSum.hidden = false;
+  } else if (d.images_error) {
+    imgSum.className = 'notice warn';
+    imgSum.innerHTML = `${icon('image')}<div class="msg">图片下载失败：${escapeHtml(d.images_error)}</div>`;
+    imgSum.hidden = false;
+  } else {
+    imgSum.hidden = true;
+  }
+
+  $('#btn-copy').disabled = !md;
+  $('#btn-download').disabled = !md;
+  // Streamed pages are already on screen; re-rendering would only reload them.
+  if (!(streamPages && streamPages.length && viewMode === 'render')) {
+    paintOutput();
+    output.scrollTop = 0;
+  }
+}
+
+async function handleResponse(resp) {
+  let data;
+  try { data = await resp.json(); } catch { throw new Error(`HTTP ${resp.status}: 响应解析失败`); }
+  if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+  return data;
+}
+
+function stripExt(n) { return String(n || '').replace(/\.[^./\\]+$/, '') || 'output'; }
+
+// ---- Streaming (SSE over fetch / XHR) --------------------------------------
+function sseParser(onEvent) {
+  let buf = '';
+  return (chunk) => {
+    buf += chunk;
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const block = buf.slice(0, idx);
+      buf = buf.slice(idx + 2);
+      let event = 'message';
+      const data = [];
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) data.push(line.slice(5).replace(/^ /, ''));
+      }
+      if (data.length) onEvent(event, JSON.parse(data.join('\n')));
+    }
+  };
+}
+
+async function readSSE(resp, onEvent) {
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  const feed = sseParser(onEvent);
+  for (;;) {
+    const { value, done } = await reader.read();
+    feed(decoder.decode(value || new Uint8Array(), { stream: !done }));
+    if (done) return;
+  }
+}
+
+function abortError() { return Object.assign(new Error('aborted'), { name: 'AbortError' }); }
+
+// POST via XHR: unlike fetch, it reports upload progress. The SSE response is
+// read incrementally from responseText.
+function xhrStream(url, body, { onUploadProgress, onUploadDone, onEvent }) {
+  const xhr = new XMLHttpRequest();
+  const promise = new Promise((resolve, reject) => {
+    const feed = sseParser(onEvent);
+    let seen = 0;
+    let failed = false;
+    const fail = (e) => { if (!failed) { failed = true; reject(e); } };
+    const pump = () => {
+      if (failed || xhr.status !== 200) return;
+      const text = xhr.responseText;
+      if (text.length <= seen) return;
+      const chunk = text.slice(seen);
+      seen = text.length;
+      try { feed(chunk); } catch (e) { fail(e); xhr.abort(); }
+    };
+    xhr.upload.onprogress = (e) => onUploadProgress(e.loaded, e.total);
+    xhr.upload.onload = onUploadDone;
+    xhr.onprogress = pump;
+    xhr.onload = () => {
+      if (xhr.status !== 200) {
+        let msg = `HTTP ${xhr.status}`;
+        try { msg = JSON.parse(xhr.responseText).error || msg; } catch {}
+        fail(new Error(msg));
+        return;
+      }
+      pump();
+      if (!failed) resolve();
+    };
+    xhr.onerror = () => fail(new Error('网络错误，连接中断'));
+    xhr.onabort = () => fail(abortError());
+    xhr.open('POST', url);
+    xhr.send(body);
+  });
+  return { promise, abort: () => xhr.abort() };
+}
+
+// Keep whatever pages already arrived so they can still be copied / downloaded.
+function keepPartial(name) {
+  if (!streamPages || !streamPages.some(Boolean)) return;
+  lastResult = { markdown: assemblePages(streamPages), partial: true };
+  lastName = name + '.partial';
+  $('#btn-copy').disabled = false;
+  $('#btn-download').disabled = false;
+}
+
+// start(onEvent) launches the request and returns { promise, abort }.
+async function streamConvert(btn, label, nameOf, start) {
+  resetResult();
+  clearError();
+  setBusy(btn, true, label);
+  let name = nameOf(null);
+  let result = null;
+  const onEvent = (event, data) => {
+    if (event === 'stage') {
+      startPhase(data.stage);
+      setStage(STAGE_LABELS[data.stage] || data.stage);
+      setBar('indeterminate');
+      setDetail('');
+      if (streamPages) updateProgress();
+    } else if (event === 'meta') beginPages(data.total_pages);
+    else if (event === 'page') addPage(data);
+    else if (event === 'done') result = data;
+    else if (event === 'error') throw new Error(data.error || `HTTP ${data.status}`);
+  };
+  try {
+    current = start(onEvent);
+    await current.promise;
+    if (!result) throw new Error('连接中断，未收到完整结果');
+    finishPhases(result.timings);
+    name = nameOf(result);
+    showResult(result, name);
+  } catch (e) {
+    finishPhases();
+    keepPartial(name);
+    const aborted = e.name === 'AbortError';
+    const partial = lastResult ? '，已保留完成的页面' : '';
+    showError(aborted ? `已停止转换${partial}` : e.message + partial);
+  } finally {
+    if (current) current.abort();  // releases the connection if we bailed out mid-stream
+    current = null;
+    setBusy(btn, false);
+    if (streamPages && streamPages.length && !(lastResult && !lastResult.partial)) paintOutput();
+  }
+}
+
+$('#btn-stop').addEventListener('click', () => { if (current) current.abort(); });
+
+// ---- Submit handlers -------------------------------------------------------
+const btnFile = $('#btn-file'); btnFile.dataset.label = btnFile.innerHTML;
+btnFile.addEventListener('click', () => {
+  if (!selectedFile) { showError('请先选择文件'); return; }
+  const f = selectedFile;
+  const fd = new FormData();
+  fd.append('file', f);
+  fd.append('parse_mode', parseMode);
+  if (selectedModel) fd.append('model', selectedModel);
+  streamConvert(btnFile, '上传中…', () => stripExt(f.name), (onEvent) => {
+    startPhase('upload');
+    setBar('pct', 0);
+    return xhrStream('/convert/file/stream', fd, {
+      onUploadProgress: (loaded, total) => {
+        const secs = (performance.now() - phases[0].start) / 1000;
+        setBar('pct', total ? (loaded / total) * 100 : 0);
+        setDetail(`${formatBytes(loaded)} / ${formatBytes(total || f.size)}` +
+          (secs > 0.2 ? ` · ${formatBytes(loaded / secs)}/s` : ''));
+      },
+      onUploadDone: () => {
+        startPhase('receive');
+        setStage('上传完成，等待服务器…');
+        setBar('indeterminate');
+        setDetail('');
+      },
+      onEvent,
+    });
+  });
+});
+
+const btnUrl = $('#btn-url'); btnUrl.dataset.label = btnUrl.innerHTML;
+btnUrl.addEventListener('click', () => {
+  const url = $('#url-input').value.trim();
+  if (!url) { showError('请输入 URL'); return; }
+  const body = JSON.stringify({
+    url,
+    download_images: $('#url-download-images').checked,
+    parse_mode: parseMode,
+    model: selectedModel || undefined,
+  });
+  const nameOf = (d) => {
+    const src = (d && d.source) || {};
+    let name = src.title || src.filename;
+    if (!name) { try { name = new URL(url).hostname; } catch { name = 'page'; } }
+    return stripExt(name);
+  };
+  streamConvert(btnUrl, '抓取中…', nameOf, (onEvent) => {
+    startPhase('fetch');
+    const ac = new AbortController();
+    const promise = (async () => {
+      const resp = await fetch('/convert/url/stream', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body,
+        signal: ac.signal,
+      });
+      if (!resp.ok) await handleResponse(resp);  // throws the server's error message
+      await readSSE(resp, onEvent);
+    })();
+    return { promise, abort: () => ac.abort() };
+  });
+});
+
+$('#url-input').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) btnUrl.click(); });
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !busy) {
+    e.preventDefault();
+    ({ file: btnFile, url: btnUrl })[activeTab].click();
+  }
+});
+
+// ---- View toggles + copy / download ----------------------------------------
+function setView(mode) {
+  viewMode = mode;
+  $('#btn-view-render').classList.toggle('active', mode === 'render');
+  $('#btn-view-raw').classList.toggle('active', mode === 'raw');
+  paintOutput();
+}
+$('#btn-view-render').addEventListener('click', () => setView('render'));
+$('#btn-view-raw').addEventListener('click', () => setView('raw'));
+
+let toastTimer = null;
+function toast(msg) {
+  $('#toast-msg').textContent = msg;
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 1600);
+}
+
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  // Fallback for plain-HTTP deployments where the Clipboard API is unavailable.
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand('copy');
+  ta.remove();
+  if (!ok) throw new Error('浏览器不支持');
+}
+
+$('#btn-copy').addEventListener('click', async () => {
+  // Copy the user-preferred markdown form (localized when present, raw otherwise).
+  const text = preferredMarkdown(lastResult);
+  if (!text) return;
+  try {
+    await copyText(text);
+    const btn = $('#btn-copy');
+    btn.classList.add('done');
+    btn.querySelector('span').textContent = '已复制';
+    btn.querySelector('use').setAttribute('href', '#i-check');
+    setTimeout(() => {
+      btn.classList.remove('done');
+      btn.querySelector('span').textContent = '复制';
+      btn.querySelector('use').setAttribute('href', '#i-copy');
+    }, 1500);
+    toast('Markdown 已复制到剪贴板');
+  } catch (e) {
+    showError('复制失败: ' + e.message);
+  }
+});
+
+$('#btn-download').addEventListener('click', () => {
+  const text = preferredMarkdown(lastResult);
+  if (!text) return;
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = lastName.replace(/[\\/:*?"<>|]+/g, '_').slice(0, 120) + '.md';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+</script>
+</body>
+</html>

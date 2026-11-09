@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" width="900" height="300" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <style>
+    .ground { fill: #ffffff; }
+    .card   { fill: #f6f8fa; stroke: #d0d7de; }
+    .t      { fill: #1f2328; }
+    .m      { fill: #59636e; }
+    .line   { stroke: #8c959f; fill: none; stroke-width: 1.6; }
+    .arrow  { fill: #8c959f; }
+    .out    { fill: #eef6ff; stroke: #3b82f6; }
+    .pt     { fill: #ffffff; font-weight: 600; }
+    .ocr    { fill: #ff6900; }
+    .auto   { fill: #3b82f6; }
+    .direct { fill: #16a34a; }
+    .l-ocr    { stroke: #ff6900; fill: none; stroke-width: 2; }
+    .l-auto   { stroke: #3b82f6; fill: none; stroke-width: 2; }
+    .l-direct { stroke: #16a34a; fill: none; stroke-width: 2; }
+    .decide { fill: #eef4ff; stroke: #3b82f6; stroke-width: 1.5; }
+    .lbl    { fill: #2563eb; font-weight: 600; }
+    @media (prefers-color-scheme: dark) {
+      .ground { fill: #0d1117; }
+      .card   { fill: #161b22; stroke: #3d444d; }
+      .t      { fill: #e6edf3; }
+      .m      { fill: #9198a1; }
+      .line   { stroke: #6e7681; }
+      .arrow  { fill: #6e7681; }
+      .out    { fill: #0f2140; stroke: #4f8ff7; }
+      .decide { fill: #0f1d36; }
+      .lbl    { fill: #79a8ff; }
+    }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path class="arrow" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+    <marker id="a-ocr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path class="ocr" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+    <marker id="a-auto" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path class="auto" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+    <marker id="a-direct" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path class="direct" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+  </defs>
+
+  <rect class="ground" width="900" height="300" rx="12"/>
+
+  <!-- inputs -->
+  <rect class="card" x="20" y="34" width="160" height="172" rx="10"/>
+  <text class="t" x="100" y="116" font-size="17" font-weight="700" text-anchor="middle">Documents</text>
+  <text class="m" x="100" y="138" font-size="13" text-anchor="middle">PDF · Office · Images</text>
+
+  <rect class="card" x="20" y="226" width="160" height="50" rx="10"/>
+  <text class="t" x="100" y="257" font-size="17" font-weight="700" text-anchor="middle">Web URL</text>
+
+  <!-- fan out to the three modes -->
+  <path class="line" d="M180,120 H200 M200,52 V190"/>
+  <path class="line" d="M200,52 H222" marker-end="url(#a)"/>
+  <path class="line" d="M200,120 H222" marker-end="url(#a)"/>
+  <path class="line" d="M200,190 H222" marker-end="url(#a)"/>
+
+  <rect class="ocr" x="224" y="40" width="72" height="24" rx="12"/>
+  <text class="pt" x="260" y="57" font-size="13" text-anchor="middle">ocr</text>
+  <rect class="auto" x="224" y="108" width="72" height="24" rx="12"/>
+  <text class="pt" x="260" y="125" font-size="13" text-anchor="middle">auto</text>
+  <rect class="direct" x="224" y="178" width="72" height="24" rx="12"/>
+  <text class="pt" x="260" y="195" font-size="13" text-anchor="middle">direct</text>
+
+  <!-- ocr: always the model -->
+  <path class="l-ocr" d="M296,52 H556" marker-end="url(#a-ocr)"/>
+
+  <!-- auto: decide per page -->
+  <path class="l-auto" d="M296,120 H362" marker-end="url(#a-auto)"/>
+  <path class="decide" d="M364,120 L432,98 L500,120 L432,142 Z"/>
+  <text class="t" x="432" y="125" font-size="12" text-anchor="middle">text layer?</text>
+  <path class="l-auto" d="M432,98 V78 H556" marker-end="url(#a-auto)"/>
+  <text class="lbl" x="440" y="92" font-size="11">no</text>
+  <path class="l-auto" d="M432,142 V164 H556" marker-end="url(#a-auto)"/>
+  <text class="lbl" x="440" y="157" font-size="11">yes</text>
+
+  <!-- direct: always the parser -->
+  <path class="l-direct" d="M296,190 H556" marker-end="url(#a-direct)"/>
+
+  <!-- engines -->
+  <rect class="card" x="558" y="34" width="170" height="60" rx="10"/>
+  <text class="t" x="643" y="60" font-size="15" font-weight="700" text-anchor="middle">VLM</text>
+  <text class="m" x="643" y="80" font-size="12" text-anchor="middle">e.g. xiaomi-ocr-0</text>
+
+  <rect class="card" x="558" y="146" width="170" height="60" rx="10"/>
+  <text class="t" x="643" y="172" font-size="15" font-weight="700" text-anchor="middle">Direct parser</text>
+  <text class="m" x="643" y="192" font-size="12" text-anchor="middle">reads the text layer</text>
+
+  <!-- url -->
+  <path class="line" d="M180,251 H226" marker-end="url(#a)"/>
+  <text class="t" x="236" y="256" font-size="14">fetch page → extract article</text>
+
+  <!-- output -->
+  <path class="line" d="M728,64 H756" marker-end="url(#a)"/>
+  <path class="line" d="M728,176 H756" marker-end="url(#a)"/>
+  <path class="line" d="M430,251 H756" marker-end="url(#a)"/>
+  <rect class="out" x="758" y="34" width="122" height="242" rx="12"/>
+  <text class="t" x="819" y="161" font-size="19" font-weight="700" text-anchor="middle">Markdown</text>
+</svg>

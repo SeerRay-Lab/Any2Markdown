@@ -1,0 +1,55 @@
+# Any2Markdown config, shared by the CLI and the HTTP server.
+#
+# Lookup: --config > $ANY2MD_CONFIG > ./any2md.yaml > project root (/app in Docker) > ~/.any2md.yaml
+# Precedence: CLI args > ANY2MD_<KEY> env vars > this file > built-in defaults
+#   e.g. ANY2MD_BASE_URL, ANY2MD_API_KEY; model.name is ANY2MD_MODEL, parse.mode is ANY2MD_PARSE_MODE.
+
+model:
+  # Any OpenAI-compatible API (see README for serving Xiaomi-OCR-0 with vLLM)
+  base_url: http://localhost:8000/v1
+  # Leave empty if the server was started without --api-key
+  api_key:
+  # Must match the server's --served-model-name
+  name: xiaomi-ocr-0
+  temperature: 0.0
+  # Per-page timeout (seconds)
+  timeout: 60
+  # Omit to use the built-in prompt
+  prompt: |
+    Extract all information from the main body of the document image
+    and represent it in markdown format, ignoring headers and footers.
+    Tables should be expressed in OTSL format,
+    formulas should be represented using LATEX format,
+    and the parsing should be organized according to the reading order.
+
+render:
+  dpi: 200
+  # Longest image side (pixels)
+  max_image_size: 4096
+
+pipeline:
+  # Concurrent model calls per document
+  concurrency: 4
+  max_retries: 3
+  # html: convert the model's OTSL tables to HTML | otsl: keep as-is
+  table_format: html
+
+parse:
+  # ocr | auto | direct (see README). The web UI sends its own mode per request.
+  mode: auto
+
+# HTTP server only
+server:
+  # Used by any2md-server; uvicorn's own --host/--port win when launched directly
+  host: 0.0.0.0
+  port: 8088
+  # URL fetch timeout (seconds)
+  url_timeout: 10
+  max_upload_mb: 100
+  # Processes for direct PDF parsing; empty = min(CPUs, 4), 1 = in-process
+  pdf_workers:
+  # Model profiles saved from the web UI (contains API keys, do not commit)
+  profiles_file: data/model_profiles.json
+  # Image cache for /convert/url with download_images=true
+  media_dir: /media
+  public_base_url:

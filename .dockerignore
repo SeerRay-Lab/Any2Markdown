@@ -1,0 +1,58 @@
+# Keep the build context small and never send local state/secrets to the daemon.
+
+# VCS / editor / local tooling
+.git/
+.gitignore
+.github/
+.gitlab-ci.yml
+.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Python build and runtime artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+.pip-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.log
+
+# Local config / secrets / runtime state (model profiles contain API keys)
+.env
+.env.*
+data/
+media/
+tmp/
+debug/
+test_data/
+markitdown/
+
+# Not needed inside the image.
+# README.md and LICENSE are intentionally kept: pyproject.toml references them
+# at build time (readme / license-files), and hatchling needs them present.
+assets/
+docs/
+examples/
+tests/
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose*.yml

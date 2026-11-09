@@ -1,0 +1,43 @@
+[build-system]
+# PEP 639 license expressions (license = "AGPL-3.0-only") need a recent
+# hatchling + packaging in the isolated build environment.
+requires = ["hatchling>=1.27", "packaging>=24.2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "any2markdown"
+version = "0.1.0"
+description = "Model-centered document/URL/text to Markdown conversion tool + HTTP service"
+readme = "README.md"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.0",
+    "pymupdf>=1.27.1,<2",
+    # Direct (non-OCR) parsing: PDF text layer + Office formats.
+    "pymupdf4llm>=0.3.4,<1",
+    "python-docx>=1.1",
+    "python-pptx>=0.6.23",
+    "openpyxl>=3.1",
+    "Pillow>=10.0",
+    "click>=8.0",
+    "pyyaml>=6.0",
+    # HTTP service + URL fetcher
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "httpx>=0.27",
+    "trafilatura>=1.12",
+    "python-multipart>=0.0.9",
+    "beautifulsoup4>=4.12",
+    # Headless-browser fallback for sites with JS challenges (Zhihu zse-ck etc).
+    "playwright>=1.45",
+]
+
+[project.scripts]
+any2markdown = "any2markdown.__main__:main"
+any2md = "any2markdown.__main__:main"
+any2md-server = "any2markdown.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["any2markdown"]
